@@ -469,13 +469,20 @@ CArray<TData, TAllocator>::eraseImpl(
 
     for ( ; fromIdx < fromIdxTo; ++fromIdx, ++toIdx)
     {
-      if constexpr (std::is_move_assignable<TData>::value)
+      if constexpr (!std::is_trivially_copy_assignable<TData>::value)
       {
-        *m_data.getPData(toIdx) = std::move(*m_data.getPData(fromIdx));
+        if constexpr (std::is_move_assignable<TData>::value)
+        {
+          *m_data.getPData(toIdx) = std::move(*m_data.getPData(fromIdx));
+        }
+        else
+        {
+          *m_data.getPData(toIdx) = *m_data.getPData(fromIdx);
+        }
       }
       else
       {
-        *m_data.getPData(toIdx) = *m_data.getPData(fromIdx);
+        memcpy(m_data.getPData(toIdx), m_data.getPData(fromIdx), sizeof(TData));
       }
 
       ++_indexFrom;
